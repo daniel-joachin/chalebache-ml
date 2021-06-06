@@ -3,6 +3,8 @@ from flask import request
 from flask import jsonify
 import model
 import requests
+import os
+
 
 def create_app():
     app = Flask(__name__)
@@ -16,7 +18,8 @@ def verify_pothole():
     windows = model.createWindows(data) 
     locations = model.potholeOrNotPothole(windows)
     response = {'locations': locations}
-    r_apiJoachin =requests.post("http://localhost:3030/api/potholes/", data=response)
+    api_crud = os.getenv('API_CRUD')
+    r_api_crud =requests.post(api_crud, data=response)
     return jsonify(response), 200
 
 if __name__ == '__main__':
