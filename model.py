@@ -191,8 +191,7 @@ def predict(window, model):
     return pred
 
 
-def potholeOrNotPothole(windows):
-    modelo = modelTraining()
+def potholeOrNotPothole(modelo,windows):
     #array to return, contains the location of the pothole windows
     locations = []
     previous = 0
