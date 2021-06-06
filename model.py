@@ -4,6 +4,7 @@ import numpy as np
 import statistics as st
 from sklearn import svm
 from numpy.core.records import array
+from sklearn.neighbors import KNeighborsClassifier
 
 def APIData(): # Equivalente a la función que nos lanza los datos de la aplicación móvil.
     matrix = [{'accelerometer': [{'time': 0.01, 'data': [-0.3319000005722046, -0.7738999724388123, 0.10439999401569366], 'pothole': True}, {'time': 0.019, 'data': [-0.3319000005722046, -0.7738999724388123, 0.10439999401569366], 'pothole': True}, {'time': 0.037, 'data': [0.06419999897480011, -1.329800009727478, -0.3052999973297119], 'pothole': True}, {'time': 0.056, 'data': [-0.25279998779296875, -0.6926999688148499, -0.7210999727249146], 'pothole': True}, {'time': 0.07, 'data': [0.28039997816085815, 0.19709999859333038, 0.3621000051498413], 'pothole': True}, {'time': 0.086, 'data': [0.6158999800682068, -0.4211999773979187, -0.15789999067783356], 'pothole': True}, {'time': 0.106, 'data': [-0.20430000126361847, -0.4997999966144562, 0.004999999888241291], 'pothole': True}, {'time': 0.121, 'data': [-0.20430000126361847, -0.4997999966144562, 0.004999999888241291], 'pothole': True}, {'time': 0.136, 'data': [0.19169999659061432, -0.1436000019311905, -0.2759999930858612], 'pothole': True}, {'time': 0.155, 'data': [0.1459999978542328, -0.4161999821662903, 0.003999999724328518], 'pothole': True}, {'time': 0.17, 'data': [-0.06830000132322311, 0.19460000097751617, -0.33559998869895935], 'pothole': True}, {'time': 0.187, 'data': [0.11889999359846115, -0.33309999108314514, -0.30709999799728394], 'pothole': True}, {'time': 0.203, 'data': [-0.2849999964237213, 0.24949999153614044, -0.014499999582767487], 'pothole': True}, {'time': 0.221, 'data': [-0.2849999964237213, 0.24949999153614044, -0.014499999582767487], 'pothole': True}, {'time': 0.237, 'data': [0.2554999887943268, 0.08689999580383301, -0.06749999523162842], 'pothole': True}, {'time': 0.254, 'data': [-0.04270000010728836, -0.3252999782562256, 0.19009999930858612], 'pothole': True}, {'time': 0.27, 'data': [-0.39419999718666077, -0.3955000042915344, 0.10179999470710754], 'pothole': True}, {'time': 0.287, 'data': [-0.5954999923706055, 0.41259998083114624, 0.4974999725818634], 'pothole': True}, {'time': 0.304, 'data': [0.0778999999165535, 0.20809999108314514, 0.09759999811649323], 'pothole': 
@@ -79,6 +80,8 @@ def createWindows(response):
     y_acce = []
     z_acce = []
     time = []
+    location_lon = []
+    location_lat = []
     pothole_ind = -1
     #iteramos sobre la respuesta para acomodar los datos de manera más conveniente
     for entry in response:
@@ -92,36 +95,49 @@ def createWindows(response):
                 y_acce.append([])
                 z_acce.append([])
                 time.append([])
+                #location_lon.append([])
+                #location_lat.append([])
                 pothole_ind += 1    
                 pothole_flag = 1
             x_acce[pothole_ind].append(acce_data['data'][0])
             y_acce[pothole_ind].append(acce_data['data'][1])
             z_acce[pothole_ind].append(acce_data['data'][2])
             time[pothole_ind].append(acce_data['time'])
+            #location_lon[pothole_ind].append(acce_data['location']['long'])
+            #location_lat[pothole_ind].append(acce_data['location']['lat'])
                 
     #create windows
     windows = [] #aqui vamos a almacenar cada ventana 
     current = 0 #indice para saber en que dato vamos de la grabación
     winSize = 15 #tamaño en datos de cada ventana
-    print("TAMAÑO: ", len(x_acce))
+    print("Records: ", len(x_acce))
     for i in range(0, len(x_acce)):
+        print("Samples per record : "+str(len(x_acce[i])))
         for j in range(0, len(x_acce[i]) // winSize): # Creamos tantas ventanas como nos permita la cantidad de datos, con división de piso en caso de no ser exactos
             window = [] #ventana donde almacenaremos el array de [x, y, z, time]
             arrayX = [] 
             arrayY = []
             arrayZ = []
             arrayTime = []
+            arrayLocationLon = []
+            arrayLocationLat = []
             for k in range(0, winSize):
                 #insertado individual de datos en cada ventana, se realiza n veces según el tamaño deseado de la ventana
                 arrayX.append(x_acce[i][current + k])
                 arrayY.append(y_acce[i][current + k])
                 arrayZ.append(z_acce[i][current + k])
                 arrayTime.append(time[i][current + k])
+                #arrayLocationLon.append(location_lon[i][current + k])
+                #arrayLocationLat.append(location_lat[i][current + k])
+                arrayLocationLon.append(1)
+                arrayLocationLat.append(2)
             current += 15
             window.append(arrayX)
             window.append(arrayY)
             window.append(arrayZ)
             window.append(arrayTime)
+            window.append(arrayLocationLon)
+            window.append(arrayLocationLat)
             windows.append(window)
             
     return windows #regresamos n arrays correspondientes al número de grabaciones en la response, con m ventanas en su formato de array
@@ -161,41 +177,45 @@ def modelTraining():
 
     x_np = np.array(x)
     y_np = np.array(y)
-
-    clf_linear = svm.SVC(kernel = 'linear')
-    clf_linear.fit(x_np, y_np)
-    return clf_linear
+    
+    clf_knn = KNeighborsClassifier(n_neighbors=7)
+    clf_knn.fit(x_np,y_np)
+    #clf_linear = svm.SVC(kernel = 'linear')
+    #clf_linear.fit(x_np, y_np)
+    return clf_knn
 
 
 def predict(window, model):
     pred = model.predict([calculation(window)])
-    print("Predice que la ventana es: ", pred)
+    print("Window predited as: ", pred)
     return pred
 
-    
-    
 
 def potholeOrNotPothole(windows):
     modelo = modelTraining()
-    predicciones = []
+    #array to return, contains the location of the pothole windows
+    locations = []
     previous = 0
-    wasOrNot = False
+    detecting=False
+    print("Number of windows: "+str(len(windows)))
+    print("1=pothole\n2=no pothole")
     for i in range(0, len(windows)):
         var = predict(windows[i], modelo)
-        if (var == previous and var != [2]):
-            wasOrNot = True
+        #Checks consecutive pothole windows, our pothole condition
+        if (var == previous and var != [1]):
+            #Conditional to verify if you are already dectecting (for potholes that detect 3 or more consecutive pothole windows)
+            if not detecting:
+                pothole_lon=windows[i][4][0]
+                pothole_lat=windows[i][5][0]
+                locations.append({"long":pothole_lon,"lat":pothole_lat})
+            detecting=True
+        elif(var != previous and detecting):
+            detecting=False
         previous = var
-        predicciones.append(var)
-
-    return wasOrNot, predicciones
+    return locations
 
 
 
-windows = createWindows(APIData()) 
-fue, a = potholeOrNotPothole(windows)
-print(fue)
-
-
-
-
-
+#windows = createWindows(APIData()) 
+#locations = potholeOrNotPothole(windows)
+#print(locations)
