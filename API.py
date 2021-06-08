@@ -21,8 +21,9 @@ def verify_pothole():
     windows = model.createWindows([data]) 
     locations = model.potholeOrNotPothole(modelo,windows)
     response = {'locations': locations}
-    api_crud = os.getenv('API_CRUD')
-    r_api_crud =requests.post(api_crud, data=response)
+    #api_crud = os.getenv('API_CRUD')
+    api_crud = "http://localhost:3030"
+    r_api_crud =requests.post(api_crud+"/api/potholes", json=response)
     return jsonify(response), 200
 
 @app.route('/', methods=['GET'])
