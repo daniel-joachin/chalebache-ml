@@ -17,12 +17,13 @@ app = create_app()
 
 @app.route('/api/pothole/', methods=['POST'])
 def verify_pothole():
+    #print("testing API")
     data = request.get_json()
     windows = model.createWindows([data]) 
     locations = model.potholeOrNotPothole(modelo,windows)
     response = {'locations': locations}
     #api_crud = os.getenv('API_CRUD')
-    api_crud = "http://localhost:3030"
+    api_crud = "http://localhost:1441"
     r_api_crud =requests.post(api_crud+"/api/potholes", json=response)
     return jsonify(response), 200
 
