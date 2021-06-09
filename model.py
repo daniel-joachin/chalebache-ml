@@ -131,7 +131,7 @@ def potholeOrNotPothole(modelo,windows):
     for i in range(0, len(windows)):
         var = predict(windows[i], modelo)
         #Checks consecutive pothole windows, our pothole condition
-        if (var == previous and var != [1]):
+        if (var == previous and var != [2]):
             #Conditional to verify if you are already dectecting (for potholes that detect 3 or more consecutive pothole windows)
             if not detecting:
                 pothole_lon=windows[i][4][0]
